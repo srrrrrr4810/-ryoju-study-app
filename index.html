@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no" />
+<title>猟銃講習 考査対策</title>
+<meta name="description" content="猟銃等初心者講習の考査対策アプリ。オフラインで繰り返し学習できます。" />
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#1B3A2E" media="(prefers-color-scheme: light)" />
+<meta name="theme-color" content="#0E1F18" media="(prefers-color-scheme: dark)" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="猟銃講習" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png" />
+
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div id="app">
+
+  <!-- ========================= HOME ========================= -->
+  <section id="screen-home" class="screen active" data-screen="home">
+    <header class="top-header">
+      <div class="header-row">
+        <h1 class="app-title">猟銃講習 考査対策</h1>
+        <button id="btn-settings" class="icon-btn" aria-label="設定を開く">⚙️</button>
+      </div>
+      <div class="countdown-card">
+        <p class="countdown-label" id="countdown-label">考査まであと</p>
+        <p class="countdown-days"><span id="countdown-num">--</span><span class="countdown-unit">日</span></p>
+        <p class="countdown-date" id="countdown-date"></p>
+        <button id="countdown-change-btn" class="link-btn" hidden>試験日を変更する</button>
+      </div>
+      <div class="goal-chip">🎯 目標: 50問中45問以上</div>
+    </header>
+
+    <div id="last-result-card" class="last-result-card" hidden>
+      <p class="card-title">前回の本番模試</p>
+      <div class="last-result-row">
+        <span class="last-result-score"><span id="last-score">-</span> / 50</span>
+        <span class="last-result-rate" id="last-rate">-</span>
+      </div>
+      <span class="badge" id="last-pass-badge"></span>
+    </div>
+
+    <nav class="menu-grid">
+      <button class="menu-card" data-nav="exam">
+        <span class="menu-icon">📝</span>
+        <span class="menu-label">本番模試</span>
+        <span class="menu-desc">50問・本番形式</span>
+      </button>
+      <button class="menu-card" data-nav="quick">
+        <span class="menu-icon">⚡</span>
+        <span class="menu-label">10問クイック</span>
+        <span class="menu-desc">短時間で腕試し</span>
+      </button>
+      <button class="menu-card" data-nav="study">
+        <span class="menu-icon">📖</span>
+        <span class="menu-label">学習モード</span>
+        <span class="menu-desc">1問ずつじっくり</span>
+      </button>
+      <button class="menu-card" data-nav="review">
+        <span class="menu-icon">🔁</span>
+        <span class="menu-label">間違い復習</span>
+        <span class="menu-desc" id="review-count-desc">苦手を優先出題</span>
+      </button>
+      <button class="menu-card" data-nav="weakness">
+        <span class="menu-icon">🧭</span>
+        <span class="menu-label">弱点克服</span>
+        <span class="menu-desc">カテゴリ別正答率</span>
+      </button>
+      <button class="menu-card" data-nav="stats">
+        <span class="menu-icon">📊</span>
+        <span class="menu-label">成績</span>
+        <span class="menu-desc">模試の推移</span>
+      </button>
+      <button class="menu-card" data-nav="list">
+        <span class="menu-icon">📚</span>
+        <span class="menu-label">問題一覧</span>
+        <span class="menu-desc">検索・閲覧</span>
+      </button>
+      <button class="menu-card" data-nav="favorites">
+        <span class="menu-icon">⭐</span>
+        <span class="menu-label">お気に入り</span>
+        <span class="menu-desc">登録した問題だけ</span>
+      </button>
+    </nav>
+
+    <p class="disclaimer">
+      本アプリの問題は、公表されている銃刀法等の条文・警察庁および都道府県警察の公表資料をもとに学習用として独自に作成したものです。実際の考査問題そのものではありません。最終確認は受講先の公安委員会・警察が配布する教本等で行ってください。
+    </p>
+  </section>
+
+  <!-- ========================= QUIZ（学習/クイック/復習/弱点/お気に入り 共通） ========================= -->
+  <section id="screen-quiz" class="screen" data-screen="quiz">
+    <header class="quiz-header">
+      <button class="icon-btn" id="quiz-back" aria-label="戻る">←</button>
+      <div class="quiz-progress" id="quiz-progress">Q1</div>
+      <button class="icon-btn star-btn" id="quiz-fav" aria-label="お気に入り登録">☆</button>
+    </header>
+    <div class="quiz-body">
+      <div class="category-tag" id="quiz-category"></div>
+      <p class="question-text" id="quiz-question"></p>
+      <div class="feedback-area" id="quiz-feedback" hidden>
+        <div class="feedback-badge" id="feedback-badge"></div>
+        <div class="explanation-box">
+          <p class="explanation-text" id="quiz-explanation"></p>
+          <p class="source-text" id="quiz-source"></p>
+        </div>
+      </div>
+    </div>
+    <div class="quiz-actions">
+      <div class="answer-buttons" id="answer-buttons">
+        <button class="answer-btn maru" id="btn-maru" aria-label="正しい（マル）">○</button>
+        <button class="answer-btn batsu" id="btn-batsu" aria-label="誤り（バツ）">×</button>
+      </div>
+      <button class="next-btn" id="btn-next" hidden>次の問題へ →</button>
+    </div>
+  </section>
+
+  <!-- ========================= EXAM（本番模試） ========================= -->
+  <section id="screen-exam" class="screen" data-screen="exam">
+    <header class="quiz-header">
+      <button class="icon-btn" id="exam-back" aria-label="模試を中断">←</button>
+      <div class="quiz-progress" id="exam-progress">Q1 / 50</div>
+      <button class="icon-btn" id="exam-grid-btn" aria-label="回答状況を見る">▦</button>
+    </header>
+    <div class="quiz-body">
+      <div class="category-tag" id="exam-category"></div>
+      <p class="question-text" id="exam-question"></p>
+      <p class="exam-selected-indicator" id="exam-selected"></p>
+    </div>
+    <div class="quiz-actions">
+      <div class="answer-buttons">
+        <button class="answer-btn maru" id="exam-btn-maru" aria-label="正しい（マル）">○</button>
+        <button class="answer-btn batsu" id="exam-btn-batsu" aria-label="誤り（バツ）">×</button>
+      </div>
+      <div class="exam-nav-row">
+        <button class="nav-btn" id="exam-prev">← 前の問題</button>
+        <button class="nav-btn" id="exam-next">次の問題 →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- EXAM 回答状況 オーバーレイ -->
+  <div id="exam-grid-overlay" class="overlay" hidden>
+    <div class="overlay-panel">
+      <div class="overlay-header">
+        <h2>回答状況</h2>
+        <button class="icon-btn" id="exam-grid-close" aria-label="閉じる">✕</button>
+      </div>
+      <div class="grid-legend">
+        <span class="legend-item"><span class="dot answered"></span>回答済み</span>
+        <span class="legend-item"><span class="dot unanswered"></span>未回答</span>
+      </div>
+      <div class="number-grid" id="exam-number-grid"></div>
+      <button class="submit-btn" id="exam-submit-btn">採点する</button>
+    </div>
+  </div>
+
+  <!-- ========================= EXAM RESULT ========================= -->
+  <section id="screen-exam-result" class="screen" data-screen="exam-result">
+    <header class="sub-header">
+      <button class="icon-btn" id="exam-result-home" aria-label="ホームへ">←</button>
+      <h2>模試結果</h2>
+      <span class="header-spacer"></span>
+    </header>
+    <div class="result-body">
+      <div class="result-hero" id="result-hero">
+        <p class="result-score-big"><span id="result-score">0</span> / 50</p>
+        <p class="result-rate" id="result-rate">正答率 0%</p>
+        <p class="result-pass-badge" id="result-pass-badge"></p>
+      </div>
+      <div class="section-card">
+        <h3>カテゴリ別正答率</h3>
+        <div id="result-category-list" class="category-bar-list"></div>
+      </div>
+      <div class="section-card">
+        <h3>間違えた問題（<span id="result-wrong-count">0</span>問）</h3>
+        <div id="result-wrong-list" class="wrong-list"></div>
+      </div>
+      <button class="primary-btn" id="result-review-wrong">間違えた問題を復習する</button>
+      <button class="ghost-btn" id="result-retry">もう一度模試を受ける</button>
+      <button class="ghost-btn" id="result-home-btn">ホームに戻る</button>
+    </div>
+  </section>
+
+  <!-- ========================= QUICK RESULT ========================= -->
+  <section id="screen-quick-result" class="screen" data-screen="quick-result">
+    <header class="sub-header">
+      <span class="header-spacer"></span>
+      <h2>10問クイック 結果</h2>
+      <span class="header-spacer"></span>
+    </header>
+    <div class="result-body">
+      <div class="result-hero">
+        <p class="result-score-big"><span id="quick-score">0</span> / 10</p>
+        <p class="result-rate" id="quick-rate">正答率 0%</p>
+      </div>
+      <button class="primary-btn" id="quick-retry">もう一度10問挑戦</button>
+      <button class="ghost-btn" id="quick-home-btn">ホームに戻る</button>
+    </div>
+  </section>
+
+  <!-- ========================= 間違い復習 ホーム ========================= -->
+  <section id="screen-review-home" class="screen" data-screen="review-home">
+    <header class="sub-header">
+      <button class="icon-btn" id="review-home-back" aria-label="ホームへ">←</button>
+      <h2>間違い復習</h2>
+      <span class="header-spacer"></span>
+    </header>
+    <div class="result-body">
+      <div class="section-card">
+        <p class="stat-line">復習対象の問題: <strong id="review-target-count">0</strong> 問</p>
+        <p class="stat-line">克服済みの問題: <strong id="review-mastered-count">0</strong> 問</p>
+        <p class="help-text">間違えた回数が多い問題ほど優先的に出題されます。同じ問題に3回連続で正解すると「克服済み」に移動します。</p>
+      </div>
+      <button class="primary-btn" id="review-start-btn">復習を始める</button>
+      <div class="section-card">
+        <h3>克服済み一覧</h3>
+        <div id="mastered-list" class="wrong-list"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================= 弱点克服 ホーム ========================= -->
+  <section id="screen-weakness-home" class="screen" data-screen="weakness-home">
+    <header class="sub-header">
+      <button class="icon-btn" id="weakness-home-back" aria-label="ホームへ">←</button>
+      <h2>弱点克服</h2>
+      <span class="header-spacer"></span>
+    </header>
+    <div class="result-body">
+      <p class="help-text">正答率が低いカテゴリから順に表示しています。カテゴリをタップすると、そのカテゴリの問題だけを学習できます。</p>
+      <div id="weakness-category-list" class="category-bar-list weakness-list"></div>
+    </div>
+  </section>
+
+  <!-- ========================= 成績 ========================= -->
+  <section id="screen-stats" class="screen" data-screen="stats">
+    <header class="sub-header">
+      <button class="icon-btn" id="stats-back" aria-label="ホームへ">←</button>
+      <h2>成績</h2>
+      <span class="header-spacer"></span>
+    </header>
+    <div class="result-body">
+      <div class="stats-summary-grid">
+        <div class="stat-box"><p class="stat-box-label">最新スコア</p><p class="stat-box-value" id="stat-latest">-</p></div>
+        <div class="stat-box"><p class="stat-box-label">最高スコア</p><p class="stat-box-value" id="stat-best">-</p></div>
+        <div class="stat-box"><p class="stat-box-label">平均点</p><p class="stat-box-value" id="stat-avg">-</p></div>
+        <div class="stat-box"><p class="stat-box-label">直近5回平均</p><p class="stat-box-value" id="stat-avg5">-</p></div>
+        <div class="stat-box"><p class="stat-box-label">合格圏到達</p><p class="stat-box-value" id="stat-pass-count">-</p></div>
+        <div class="stat-box"><p class="stat-box-label">模試受験回数</p><p class="stat-box-value" id="stat-total-count">-</p></div>
+      </div>
+      <div class="section-card">
+        <h3>点数の推移</h3>
+        <svg id="score-chart" class="score-chart" viewBox="0 0 320 140" preserveAspectRatio="none"></svg>
+        <p class="chart-empty" id="chart-empty">まだ模試の記録がありません</p>
+      </div>
+      <div class="section-card">
+        <h3>模試履歴</h3>
+        <div id="exam-history-list" class="wrong-list"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================= 問題一覧 ========================= -->
+  <section id="screen-list" class="screen" data-screen="list">
+    <header class="sub-header">
+      <button class="icon-btn" id="list-back" aria-label="ホームへ">←</button>
+      <h2>問題一覧</h2>
+      <span class="header-spacer"></span>
+    </header>
+    <div class="list-toolbar">
+      <input type="search" id="list-search" class="search-input" placeholder="キーワードで検索（例: 更新、保管、実包）" />
+      <select id="list-category-filter" class="category-select"></select>
+    </div>
+    <div id="list-container" class="question-list"></div>
+  </section>
+
+  <!-- ========================= 設定 ========================= -->
+  <section id="screen-settings" class="screen" data-screen="settings">
+    <header class="sub-header">
+      <button class="icon-btn" id="settings-back" aria-label="ホームへ">←</button>
+      <h2>設定</h2>
+      <span class="header-spacer"></span>
+    </header>
+    <div class="result-body">
+      <div class="section-card">
+        <h3>表示テーマ</h3>
+        <div class="segmented" id="theme-segmented">
+          <button data-theme="system" class="segment-btn">端末に合わせる</button>
+          <button data-theme="light" class="segment-btn">ライト</button>
+          <button data-theme="dark" class="segment-btn">ダーク</button>
+        </div>
+      </div>
+      <div class="section-card">
+        <h3>考査日</h3>
+        <p class="help-text">現在の設定日: <strong id="settings-exam-date"></strong></p>
+        <input type="date" id="exam-date-input" class="date-input" />
+        <button class="primary-btn small" id="exam-date-save">考査日を変更する</button>
+      </div>
+      <div class="section-card">
+        <h3>データ管理</h3>
+        <p class="help-text">模試履歴・間違い問題・お気に入り・成績など、端末に保存されているすべての学習データを削除します。この操作は取り消せません。</p>
+        <button class="danger-btn" id="reset-data-btn">学習データをすべて削除</button>
+      </div>
+      <div class="section-card">
+        <h3>このアプリについて</h3>
+        <p class="help-text">問題データは、公表されている銃刀法等の条文・警察庁および都道府県警察の公表資料をもとに学習用として独自に作成したものです。法令の解釈や制度は変更される場合がありますので、最終確認は受講先の案内・教本で行ってください。</p>
+        <p class="help-text">収録問題数: <strong id="settings-question-count"></strong> 問</p>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<div id="toast" class="toast" hidden></div>
+<div id="confirm-overlay" class="overlay" hidden>
+  <div class="confirm-panel">
+    <p id="confirm-message" class="confirm-message"></p>
+    <div class="confirm-actions">
+      <button id="confirm-cancel" class="ghost-btn">キャンセル</button>
+      <button id="confirm-ok" class="danger-btn">実行する</button>
+    </div>
+  </div>
+</div>
+
+<script src="questions.js"></script>
+<script src="storage.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
